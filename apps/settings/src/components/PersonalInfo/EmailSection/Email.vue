@@ -246,7 +246,7 @@ export default {
 					}
 				}
 			}
-		}, 500),
+		}, 1000),
 
 		async deleteEmail() {
 			if (this.primary) {
