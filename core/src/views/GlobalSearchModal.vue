@@ -1,11 +1,9 @@
 <template>
-	<NcModal v-if="isVisible"
-		id="global-search"
+	<NcModal id="global-search"
 		:name="t('core', 'Global search')"
-		:show.sync="isVisible"
 		:clear-view-delay="0"
 		:title="t('Global search')"
-		@close="closeModal">
+		@close="$emit('close')">
 		<CustomDateRangeModal :is-open="showDateRangeModal"
 			:class="'global-search__date-range'"
 			@set:custom-date-range="setCustomDateRange"
@@ -187,12 +185,14 @@ export default {
 		MagnifyIcon,
 		SearchableList,
 	},
+
 	props: {
-		isVisible: {
-			type: Boolean,
-			required: true,
+		initialSearchString: {
+			type: String,
+			default: '',
 		},
 	},
+
 	data() {
 		return {
 			providers: [],
@@ -243,6 +243,8 @@ export default {
 			this.contacts = this.mapContacts(contacts)
 			console.debug('Contacts', this.contacts)
 		})
+
+		this.searchQuery = this.initialSearchString
 	},
 	methods: {
 		find(query) {
@@ -514,9 +516,6 @@ export default {
 		},
 		isValidUrl(icon) {
 			return /^https?:\/\//.test(icon) || icon.startsWith('//')
-		},
-		closeModal() {
-			this.searchQuery = ''
 		},
 	},
 }

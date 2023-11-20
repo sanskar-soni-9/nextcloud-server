@@ -20,20 +20,52 @@
   -
   -->
 <template>
-	<div class="header-menu">
-		<NcButton class="global-search__button" :aria-label="t('core', 'Global search')" @click="toggleGlobalSearch">
-			<template #icon>
-				<Magnify class="global-search__trigger" :size="22" />
+	<div>
+		<div class="header-menu">
+			<NcButton v-if="!showLocalSearch"
+				class="global-search__button"
+				aria-label="Global search"
+				@click="openLocalSearch">
+				<template #icon>
+					<Magnify class="global-search__trigger" :size="22" />
+				</template>
+			</NcButton>
+			<template v-else>
+				<NcTextField ref="search"
+					:value.sync="searchString"
+					trailing-button-icon="close"
+					:placeholder="'Search Files'"
+					:show-trailing-button="true"
+					@input="onInput"
+					@trailing-button-click="abortSearch">
+					<template #right-button>
+						<NcButton type="tertiary" class="right-button" @click="openGlobalSearch">
+							<template #icon>
+								<Earth :size="20" />
+							</template>
+							{{ t("core", "Search everywhere") }}
+						</NcButton>
+					</template>
+					<Magnify color="var(--color-main-background)" :size="20" />
+				</NcTextField>
 			</template>
-		</NcButton>
-		<GlobalSearchModal :is-visible="showGlobalSearch" :class="'global-search-modal'" />
+		</div>
+		<GlobalSearchModal v-if="showGlobalSearch"
+			:is-visible="showGlobalSearch"
+			:initial-search-string="searchString"
+			:class="'global-search-modal'"
+			@close="abortSearch" />
 	</div>
 </template>
 
 <script>
-import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
 import Magnify from 'vue-material-design-icons/Magnify.vue'
 import GlobalSearchModal from './GlobalSearchModal.vue'
+import { NcTextField, NcButton } from '@nextcloud/vue'
+
+import Earth from 'vue-material-design-icons/Earth.vue'
+
+import { emit } from '@nextcloud/event-bus'
 
 export default {
 	name: 'GlobalSearch',
@@ -41,18 +73,67 @@ export default {
 		NcButton,
 		Magnify,
 		GlobalSearchModal,
+		NcTextField,
+		Earth,
 	},
+
 	data() {
 		return {
 			showGlobalSearch: false,
+			showLocalSearch: false,
+			searchString: '',
 		}
 	},
-	mounted() {
-		console.debug('Global search initialized!')
+
+	watch: {
+		searchString() {
+			emit('nextcloud:unified-search.search', { query: this.searchString })
+		},
 	},
+
+	mounted() {
+		if (OCP.Accessibility.disableKeyboardShortcuts()) {
+			return
+		}
+
+		document.addEventListener('keydown', (event) => {
+			// if not already opened, allows us to trigger default browser on second keydown
+			if (event.ctrlKey && event.code === 'KeyF' && !this.showLocalSearch) {
+				event.preventDefault()
+				this.openLocalSearch()
+			}
+		})
+	},
+
 	methods: {
-		toggleGlobalSearch() {
-			this.showGlobalSearch = !this.showGlobalSearch
+		openLocalSearch() {
+			this.showLocalSearch = true
+			this.focusInput()
+		},
+
+		openGlobalSearch() {
+			this.showLocalSearch = false
+			this.showGlobalSearch = true
+			this.$nextTick(() => {
+				this.searchString = ''
+			})
+		},
+
+		focusInput() {
+			this.$nextTick(() => {
+				this.$refs.search.$el.children[0].children[0].focus()
+			})
+		},
+
+		abortSearch() {
+			this.showLocalSearch = false
+			this.showGlobalSearch = false
+			this.searchString = ''
+		},
+
+		onInput() {
+			// emit the search query
+
 		},
 	},
 }
@@ -60,9 +141,7 @@ export default {
 
 <style lang="scss" scoped>
 .header-menu {
-	display: flex;
-	align-items: center;
-	justify-content: center;
+	margin: 3px 0;
 
 	.global-search__button {
 		display: flex;
@@ -90,4 +169,29 @@ export default {
 		height: 80%;
 	}
 }
+
+.right-button {
+  position: absolute !important;
+  top: 0;
+  right: var(--default-clickable-area);
+}
+
+.header-menu {
+	& :deep(.input-field) {
+		margin: 3px 0 !important;
+		.input-field__input, .input-field__input--trailing-icon{
+			width: min(500px, calc(100vw - 8px)) !important;
+			border: none !important;
+			border-radius: var(--border-radius-pill) !important;
+			&:hover:not([disabled]),
+			&:focus:not([disabled]),
+			&:active:not([disabled]) {
+				box-shadow: unset !important;
+				border: unset !important;
+				outline: unset !important;
+			}
+		}
+	}
+}
+
 </style>
