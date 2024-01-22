@@ -106,7 +106,7 @@ class GenerateMetadataJob extends TimedJob {
 			// Don't generate metadata for files bigger than metadata_max_memory
 			$nodeSize = $node->getSize();
 			$memoryLimit = $this->config->getSystemValueInt('metadata_max_memory', self::DEFAULT_MEMORY_LIMIT);
-			if ($nodeSize > $memoryLimit * 1 000 000) {
+			if ($nodeSize > $memoryLimit * 1000000) {
 				$this->logger->debug("Skipping generating metadata for fileid " . $node->getId() . " as its size exceeds configured 'metadata_max_memory'.");
 				continue;
 			}
