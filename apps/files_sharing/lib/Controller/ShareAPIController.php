@@ -586,7 +586,8 @@ class ShareAPIController extends OCSController {
 	 * @param string $publicUpload If public uploading is allowed
 	 * @param string $password Password for the share
 	 * @param string|null $sendPasswordByTalk Send the password for the share over Talk
-	 * @param string $expireDate Expiry date of the share using user timezone at 00:00. It means date in UTC timezone will be used.
+	 * @param ?string $expireDate The expiry date of the share in the user's timezone at 00:00.
+	 *                If $expireDate is not supplied or set to `null`, the system default will be used.
 	 * @param string $note Note for the share
 	 * @param string $label Label for the share (only used in link and email)
 	 * @param string|null $attributes Additional attributes for the share
@@ -607,8 +608,8 @@ class ShareAPIController extends OCSController {
 		string $shareWith = null,
 		string $publicUpload = 'false',
 		string $password = '',
-		string $sendPasswordByTalk = null,
-		string $expireDate = '',
+		?string $sendPasswordByTalk = null,
+		?string $expireDate = null,
 		string $note = '',
 		string $label = '',
 		string $attributes = null
@@ -680,6 +681,22 @@ class ShareAPIController extends OCSController {
 
 		if ($attributes !== null) {
 			$share = $this->setShareAttributes($share, $attributes);
+		}
+
+		//Expire date
+		if ($expireDate !== null) {
+			if ($expireDate !== '') {
+				try {
+					$expireDateTime = $this->parseDate($expireDate);
+					$share->setExpirationDate($expireDateTime);
+				} catch (\Exception $e) {
+					throw new OCSNotFoundException($this->l->t('Invalid date, date format must be YYYY-MM-DD'));
+				}
+			} else {
+				// Client sent empty string for expire date.
+				// Set noExpirationDate to true so overwrite is prevented.
+				$share->setNoExpirationDate(true);
+			}
 		}
 
 		$share->setSharedBy($this->currentUser);
@@ -768,15 +785,6 @@ class ShareAPIController extends OCSController {
 
 			$share->setSharedWith($shareWith);
 			$share->setPermissions($permissions);
-			if ($expireDate !== '') {
-				try {
-					$expireDate = $this->parseDate($expireDate);
-					$share->setExpirationDate($expireDate);
-				} catch (\Exception $e) {
-					throw new OCSNotFoundException($this->l->t('Invalid date, date format must be YYYY-MM-DD'));
-				}
-			}
-
 			$share->setSharedWithDisplayName($this->getCachedFederatedDisplayName($shareWith, false));
 		} elseif ($shareType === IShare::TYPE_REMOTE_GROUP) {
 			if (!$this->shareManager->outgoingServer2ServerGroupSharesAllowed()) {
@@ -789,14 +797,6 @@ class ShareAPIController extends OCSController {
 
 			$share->setSharedWith($shareWith);
 			$share->setPermissions($permissions);
-			if ($expireDate !== '') {
-				try {
-					$expireDate = $this->parseDate($expireDate);
-					$share->setExpirationDate($expireDate);
-				} catch (\Exception $e) {
-					throw new OCSNotFoundException($this->l->t('Invalid date, date format must be YYYY-MM-DD'));
-				}
-			}
 		} elseif ($shareType === IShare::TYPE_CIRCLE) {
 			if (!\OC::$server->getAppManager()->isEnabledForUser('circles') || !class_exists('\OCA\Circles\ShareByCircleProvider')) {
 				throw new OCSNotFoundException($this->l->t('You cannot share to a Circle if the app is not enabled'));
@@ -812,34 +812,24 @@ class ShareAPIController extends OCSController {
 			$share->setPermissions($permissions);
 		} elseif ($shareType === IShare::TYPE_ROOM) {
 			try {
-				$this->getRoomShareHelper()->createShare($share, $shareWith, $permissions, $expireDate);
+				$this->getRoomShareHelper()->createShare($share, $shareWith, $permissions, $expireDate ?? '');
 			} catch (QueryException $e) {
 				throw new OCSForbiddenException($this->l->t('Sharing %s failed because the back end does not support room shares', [$node->getPath()]));
 			}
 		} elseif ($shareType === IShare::TYPE_DECK) {
 			try {
-				$this->getDeckShareHelper()->createShare($share, $shareWith, $permissions, $expireDate);
+				$this->getDeckShareHelper()->createShare($share, $shareWith, $permissions, $expireDate ?? '');
 			} catch (QueryException $e) {
 				throw new OCSForbiddenException($this->l->t('Sharing %s failed because the back end does not support room shares', [$node->getPath()]));
 			}
 		} elseif ($shareType === IShare::TYPE_SCIENCEMESH) {
 			try {
-				$this->getSciencemeshShareHelper()->createShare($share, $shareWith, $permissions, $expireDate);
+				$this->getSciencemeshShareHelper()->createShare($share, $shareWith, $permissions, $expireDate ?? '');
 			} catch (QueryException $e) {
 				throw new OCSForbiddenException($this->l->t('Sharing %s failed because the back end does not support ScienceMesh shares', [$node->getPath()]));
 			}
 		} else {
 			throw new OCSBadRequestException($this->l->t('Unknown share type'));
-		}
-
-		//Expire date
-		if ($expireDate !== '') {
-			try {
-				$expireDate = $this->parseDate($expireDate);
-				$share->setExpirationDate($expireDate);
-			} catch (\Exception $e) {
-				throw new OCSNotFoundException($this->l->t('Invalid date, date format must be YYYY-MM-DD'));
-			}
 		}
 
 		$share->setShareType($shareType);
