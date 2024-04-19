@@ -77,7 +77,7 @@
 			<div class="modal__item">
 				<label class="modal__label"
 					for="new-user-groups">
-					{{ !settings.isAdmin ? t('settings', 'Groups (required)') : t('settings', 'Groups') }}
+					{{ !settings.isAdmin ? t('settings', 'Groups (required)') : t('settings', 'Belongs to the following group(s)') }}
 				</label>
 				<NcSelect class="modal__select"
 					input-id="new-user-groups"
@@ -100,7 +100,7 @@
 				class="modal__item">
 				<label class="modal__label"
 					for="new-user-sub-admin">
-					{{ t('settings', 'Administered groups') }}
+					{{ t('settings', 'Manages user(s) in the following group(s)') }}
 				</label>
 				<NcSelect v-model="newUser.subAdminsGroups"
 					class="modal__select"
