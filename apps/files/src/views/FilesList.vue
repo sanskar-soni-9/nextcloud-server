@@ -54,10 +54,12 @@
 
 					<!-- Uploader -->
 					<UploadPicker v-else-if="currentFolder"
-						:content="dirContents"
+						:content="getContent"
 						:destination="currentFolder"
-						:multiple="true"
+						allow-folders
+						:forbidden-characters="forbiddenCharacters"
 						class="files-list__header-upload-button"
+						multiple
 						@failed="onUploadFail"
 						@uploaded="onUpload" />
 				</template>
@@ -121,29 +123,29 @@ import type { Upload } from '@nextcloud/upload'
 import type { UserConfig } from '../types.ts'
 import type { View, ContentsWithRoot } from '@nextcloud/files'
 
+import { getCapabilities } from '@nextcloud/capabilities'
+import { showError, showWarning } from '@nextcloud/dialogs'
 import { emit, subscribe, unsubscribe } from '@nextcloud/event-bus'
 import { Folder, Node, Permission } from '@nextcloud/files'
-import { getCapabilities } from '@nextcloud/capabilities'
-import { join, dirname } from 'path'
-import { orderBy } from 'natural-orderby'
-import { Parser } from 'xml2js'
-import { showError } from '@nextcloud/dialogs'
-import { translate, translatePlural } from '@nextcloud/l10n'
-import { Type } from '@nextcloud/sharing'
-import { UploadPicker } from '@nextcloud/upload'
 import { loadState } from '@nextcloud/initial-state'
+import { translate as t, translatePlural as n } from '@nextcloud/l10n'
+import { Type } from '@nextcloud/sharing'
+import { UploadStatus, UploadPicker } from '@nextcloud/upload'
+import { orderBy } from 'natural-orderby'
+import { join, dirname, normalize } from 'path'
 import { defineComponent } from 'vue'
 
-import LinkIcon from 'vue-material-design-icons/Link.vue'
-import ListViewIcon from 'vue-material-design-icons/FormatListBulletedSquare.vue'
 import NcAppContent from '@nextcloud/vue/dist/Components/NcAppContent.js'
 import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
 import NcEmptyContent from '@nextcloud/vue/dist/Components/NcEmptyContent.js'
 import NcIconSvgWrapper from '@nextcloud/vue/dist/Components/NcIconSvgWrapper.js'
 import NcLoadingIcon from '@nextcloud/vue/dist/Components/NcLoadingIcon.js'
-import PlusIcon from 'vue-material-design-icons/Plus.vue'
 import AccountPlusIcon from 'vue-material-design-icons/AccountPlus.vue'
+import LinkIcon from 'vue-material-design-icons/Link.vue'
+import ListViewIcon from 'vue-material-design-icons/FormatListBulletedSquare.vue'
+import PlusIcon from 'vue-material-design-icons/Plus.vue'
 import ViewGridIcon from 'vue-material-design-icons/ViewGrid.vue'
+import debounce from 'debounce'
 
 import { action as sidebarAction } from '../actions/sidebarAction.ts'
 import { useFilesStore } from '../store/files.ts'
@@ -158,7 +160,6 @@ import filesListWidthMixin from '../mixins/filesListWidth.ts'
 import filesSortingMixin from '../mixins/filesSorting.ts'
 import logger from '../logger.js'
 import DragAndDropNotice from '../components/DragAndDropNotice.vue'
-import debounce from 'debounce'
 
 const isSharingEnabled = (getCapabilities() as { files_sharing?: boolean })?.files_sharing !== undefined
 
@@ -196,8 +197,12 @@ export default defineComponent({
 		const viewConfigStore = useViewConfigStore()
 
 		const enableGridView = (loadState('core', 'config', [])['enable_non-accessible_features'] ?? true)
+		const forbiddenCharacters = loadState<string[]>('files', 'forbiddenCharacters', [])
 
 		return {
+			t,
+			n,
+
 			filesStore,
 			pathsStore,
 			selectionStore,
@@ -205,6 +210,7 @@ export default defineComponent({
 			userConfigStore,
 			viewConfigStore,
 			enableGridView,
+			forbiddenCharacters,
 		}
 	},
 
@@ -215,11 +221,16 @@ export default defineComponent({
 			promise: null,
 			Type,
 
-			_unsubscribeStore: () => {},
+			unsubscribeStore: () => {},
 		}
 	},
 
 	computed: {
+		getContent() {
+			const view = this.currentView
+			return async (path?: string) => (await view.getContents(normalize(`${this.currentFolder?.path ?? ''}/${path ?? ''}`))).contents
+		},
+
 		userConfig(): UserConfig {
 			return this.userConfigStore.userConfig
 		},
@@ -229,7 +240,7 @@ export default defineComponent({
 		},
 
 		pageHeading(): string {
-			return this.currentView?.name ?? this.t('files', 'Files')
+			return this.currentView?.name ?? t('files', 'Files')
 		},
 
 		/**
@@ -368,13 +379,13 @@ export default defineComponent({
 		},
 		shareButtonLabel() {
 			if (!this.shareAttributes) {
-				return this.t('files', 'Share')
+				return t('files', 'Share')
 			}
 
 			if (this.shareButtonType === Type.SHARE_TYPE_LINK) {
-				return this.t('files', 'Shared by link')
+				return t('files', 'Shared by link')
 			}
-			return this.t('files', 'Shared')
+			return t('files', 'Shared')
 		},
 		shareButtonType(): Type | null {
 			if (!this.shareAttributes) {
@@ -391,8 +402,8 @@ export default defineComponent({
 
 		gridViewButtonLabel() {
 			return this.userConfig.grid_view
-				? this.t('files', 'Switch to list view')
-				: this.t('files', 'Switch to grid view')
+				? t('files', 'Switch to list view')
+				: t('files', 'Switch to grid view')
 		},
 
 		/**
@@ -406,9 +417,9 @@ export default defineComponent({
 		},
 		cantUploadLabel() {
 			if (this.isQuotaExceeded) {
-				return this.t('files', 'Your have used your space quota and cannot upload files anymore')
+				return t('files', 'Your have used your space quota and cannot upload files anymore')
 			}
-			return this.t('files', 'You don’t have permission to upload or create files here')
+			return t('files', 'You don’t have permission to upload or create files here')
 		},
 
 		/**
@@ -458,14 +469,14 @@ export default defineComponent({
 		subscribe('nextcloud:unified-search.reset', this.onSearch)
 
 		// reload on settings change
-		this._unsubscribeStore = this.userConfigStore.$subscribe(() => this.fetchContent(), { deep: true })
+		this.unsubscribeStore = this.userConfigStore.$subscribe(() => this.fetchContent(), { deep: true })
 	},
 
 	unmounted() {
 		unsubscribe('files:node:updated', this.onUpdatedNode)
 		unsubscribe('nextcloud:unified-search.search', this.onSearch)
 		unsubscribe('nextcloud:unified-search.reset', this.onSearch)
-		this._unsubscribeStore()
+		this.unsubscribeStore()
 	},
 
 	methods: {
@@ -537,13 +548,12 @@ export default defineComponent({
 
 		/**
 		 * The upload manager have finished handling the queue
-		 * @param {Upload} upload the uploaded data
+		 * @param upload the uploaded data
 		 */
 		onUpload(upload: Upload) {
 			// Let's only refresh the current Folder
 			// Navigating to a different folder will refresh it anyway
-			const destinationSource = dirname(upload.source)
-			const needsRefresh = destinationSource === this.currentFolder?.source
+			const needsRefresh = dirname(upload.source) === this.currentFolder!.source
 
 			// TODO: fetch uploaded files data only
 			// Use parseInt(upload.response?.headers?.['oc-fileid']) to get the fileid
@@ -556,39 +566,46 @@ export default defineComponent({
 		async onUploadFail(upload: Upload) {
 			const status = upload.response?.status || 0
 
+			if (upload.status === UploadStatus.CANCELLED) {
+				showWarning(t('files', 'Upload was cancelled by user'))
+				return
+			}
+
 			// Check known status codes
 			if (status === 507) {
-				showError(this.t('files', 'Not enough free space'))
+				showError(t('files', 'Not enough free space'))
 				return
 			} else if (status === 404 || status === 409) {
-				showError(this.t('files', 'Target folder does not exist any more'))
+				showError(t('files', 'Target folder does not exist any more'))
 				return
 			} else if (status === 403) {
-				showError(this.t('files', 'Operation is blocked by access control'))
+				showError(t('files', 'Operation is blocked by access control'))
 				return
 			}
 
 			// Else we try to parse the response error message
-			try {
-				const parser = new Parser({ trim: true, explicitRoot: false })
-				const response = await parser.parseStringPromise(upload.response?.data)
-				const message = response['s:message'][0] as string
-				if (typeof message === 'string' && message.trim() !== '') {
-					// The server message is also translated
-					showError(this.t('files', 'Error during upload: {message}', { message }))
-					return
+			if (upload.response) {
+				try {
+					const parser = new DOMParser()
+					const response = parser.parseFromString(upload.response.data, 'text/xml')
+					const message = response.querySelector('message')?.textContent
+					if (typeof message === 'string' && message.trim() !== '') {
+						// The server message is also translated
+						showError(t('files', 'Error during upload: {message}', { message }))
+						return
+					}
+				} catch (error) {
+					logger.error('Error while parsing', { error })
 				}
-			} catch (error) {
-				logger.error('Error while parsing', { error })
 			}
 
 			// Finally, check the status code if we have one
 			if (status !== 0) {
-				showError(this.t('files', 'Error during upload, status code {status}', { status }))
+				showError(t('files', 'Error during upload, status code {status}', { status }))
 				return
 			}
 
-			showError(this.t('files', 'Unknown error during upload'))
+			showError(t('files', 'Unknown error during upload'))
 		},
 
 		/**
@@ -629,12 +646,10 @@ export default defineComponent({
 			}
 			sidebarAction.exec(this.currentFolder, this.currentView, this.currentFolder.path)
 		},
+
 		toggleGridView() {
 			this.userConfigStore.update('grid_view', !this.userConfig.grid_view)
 		},
-
-		t: translate,
-		n: translatePlural,
 	},
 })
 </script>
