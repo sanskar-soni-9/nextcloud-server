@@ -20,7 +20,7 @@
  *
  */
 // eslint-disable-next-line n/no-extraneous-import
-import type { AxiosError } from 'axios'
+import type { AxiosError } from '@nextcloud/axios'
 import type { Node } from '@nextcloud/files'
 
 import { showWarning } from '@nextcloud/dialogs'
