@@ -464,13 +464,18 @@ class User_Proxy extends Proxy implements IUserBackend, UserInterface, IUserLDAP
 	}
 
 	public function getDisabledUserList(?int $limit = null, int $offset = 0): array {
-		return array_map(
-			fn (OfflineUser $user) => $user->getOCName(),
-			array_slice(
-				$this->deletedUsersIndex->getUsers(),
-				$offset,
-				$limit
-			)
-		);
+		if ((int)$this->getAccess(array_key_first($this->backends) ?? '')->connection->markRemnantsAsDisabled === 1) {
+			/* If first LDAP configuration considers remnants as disabled we consider all of them do */
+			return array_map(
+				fn (OfflineUser $user) => $user->getOCName(),
+				array_slice(
+					$this->deletedUsersIndex->getUsers(),
+					$offset,
+					$limit
+				)
+			);
+		} else {
+			return [];
+		}
 	}
 }
