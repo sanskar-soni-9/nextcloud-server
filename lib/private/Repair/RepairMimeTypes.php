@@ -106,6 +106,14 @@ class RepairMimeTypes implements IRepairStep {
 		return $count;
 	}
 
+	private function introduceExcalidrawType() {
+		$updatedMimetypes = [
+			'excalidraw' => 'application/vnd.excalidraw+json',
+		];
+
+		return $this->updateMimetypes($updatedMimetypes);
+	}
+
 	private function introduceAsciidocType() {
 		$updatedMimetypes = [
 			'adoc' => 'text/asciidoc',
@@ -333,6 +341,10 @@ class RepairMimeTypes implements IRepairStep {
 
 		if (version_compare($ocVersionFromBeforeUpdate, '29.0.0.10', '<') && $this->introduceReStructuredTextFormatType()) {
 			$out->info('Fixed ReStructured Text mime type');
+		}
+
+		if (version_compare($ocVersionFromBeforeUpdate, '29.0.0.10', '<') && $this->introduceExcalidrawType()) {
+			$out->info('Fixed Excalidraw mime type');
 		}
 	}
 }

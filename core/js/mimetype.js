@@ -77,6 +77,7 @@ OC.MimeType = {
 		while (mimeType in OC.MimeTypeList.aliases) {
 			mimeType = OC.MimeTypeList.aliases[mimeType];
 		}
+
 		if (mimeType in OC.MimeType._mimeTypeIcons) {
 			return OC.MimeType._mimeTypeIcons[mimeType];
 		}
@@ -94,6 +95,7 @@ OC.MimeType = {
 			}
 		}
 		if(OCA.Theming && gotIcon === null) {
+			console.log(mimeType);
 			path = OC.generateUrl('/apps/theming/img/core/filetypes/');
 			path += OC.MimeType._getFile(mimeType, OC.MimeTypeList.files);
 			gotIcon = true;
