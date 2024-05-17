@@ -698,6 +698,8 @@ class Manager implements IManager {
 	public function getNextScheduledTask(?string $taskTypeId = null): Task {
 		try {
 			$taskEntity = $this->taskMapper->findOldestScheduledByType($taskTypeId);
+			$taskEntity->setStatus(Task::STATUS_RUNNING);
+			$this->taskMapper->update($taskEntity);
 			return $taskEntity->toPublicTask();
 		} catch (DoesNotExistException $e) {
 			throw new \OCP\TaskProcessing\Exception\NotFoundException('Could not find the task', 0, $e);
