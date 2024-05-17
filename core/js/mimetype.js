@@ -95,7 +95,6 @@ OC.MimeType = {
 			}
 		}
 		if(OCA.Theming && gotIcon === null) {
-			console.log(mimeType);
 			path = OC.generateUrl('/apps/theming/img/core/filetypes/');
 			path += OC.MimeType._getFile(mimeType, OC.MimeTypeList.files);
 			gotIcon = true;
