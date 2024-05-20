@@ -33,6 +33,8 @@
  */
 namespace OC\Repair;
 
+use OCP\DB\Exception;
+use OCP\DB\IResult;
 use OCP\DB\QueryBuilder\IQueryBuilder;
 use OCP\IConfig;
 use OCP\IDBConnection;
@@ -58,7 +60,10 @@ class RepairMimeTypes implements IRepairStep {
 		return 'Repair mime types';
 	}
 
-	private function updateMimetypes($updatedMimetypes) {
+	/**
+	 * @throws Exception
+	 */
+	private function updateMimetypes($updatedMimetypes): IResult|int {
 		$query = $this->connection->getQueryBuilder();
 		$query->select('id')
 			->from('mimetypes')
@@ -106,7 +111,10 @@ class RepairMimeTypes implements IRepairStep {
 		return $count;
 	}
 
-	private function introduceExcalidrawType() {
+	/**
+	 * @throws Exception
+	 */
+	private function introduceExcalidrawType(): IResult|int {
 		$updatedMimetypes = [
 			'excalidraw' => 'application/vnd.excalidraw+json',
 		];
@@ -273,7 +281,7 @@ class RepairMimeTypes implements IRepairStep {
 	/**
 	 * Fix mime types
 	 */
-	public function run(IOutput $out) {
+	public function run(IOutput $out): void {
 		$ocVersionFromBeforeUpdate = $this->config->getSystemValueString('version', '0.0.0');
 
 		// NOTE TO DEVELOPERS: when adding new mime types, please make sure to
