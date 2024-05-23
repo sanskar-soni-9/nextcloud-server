@@ -232,7 +232,7 @@ class NavigationManager implements INavigationManager {
 				'id' => 'help',
 				'order' => 99998,
 				'href' => $this->urlGenerator->linkToRoute('settings.Help.help'),
-				'name' => $l->t('Help'),
+				'name' => $l->t('Help & privacy'),
 				'icon' => $this->urlGenerator->imagePath('settings', 'help.svg'),
 			]);
 		}
@@ -326,7 +326,7 @@ class NavigationManager implements INavigationManager {
 					'id' => 'core_users',
 					'order' => 6,
 					'href' => $this->urlGenerator->linkToRoute('settings.Users.usersList'),
-					'name' => $l->t('Users'),
+					'name' => $l->t('Accounts'),
 					'icon' => $this->urlGenerator->imagePath('settings', 'users.svg'),
 				]);
 			}

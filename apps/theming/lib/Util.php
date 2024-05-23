@@ -93,7 +93,7 @@ class Util {
 			$contrast = $this->colorContrast($color, $blurredBackground);
 
 			// Min. element contrast is 3:1 but we need to keep hover states in mind -> min 3.2:1
-			$minContrast = $highContrast ? 5.5 : 3.2;
+			$minContrast = $highContrast ? 5.6 : 3.2;
 
 			while ($contrast < $minContrast && $iteration++ < 100) {
 				$hsl = Color::hexToHsl($color);
@@ -218,7 +218,7 @@ class Util {
 
 
 	/**
-	 * @param $app string app name
+	 * @param string $app app name
 	 * @return string|ISimpleFile path to app icon / file of logo
 	 */
 	public function getAppIcon($app) {
@@ -248,8 +248,8 @@ class Util {
 	}
 
 	/**
-	 * @param $app string app name
-	 * @param $image string relative path to image in app folder
+	 * @param string $app app name
+	 * @param string $image relative path to image in app folder
 	 * @return string|false absolute path to image
 	 */
 	public function getAppImage($app, $image) {
@@ -295,8 +295,8 @@ class Util {
 	/**
 	 * replace default color with a custom one
 	 *
-	 * @param $svg string content of a svg file
-	 * @param $color string color to match
+	 * @param string $svg content of a svg file
+	 * @param string $color color to match
 	 * @return string
 	 */
 	public function colorizeSvg($svg, $color) {

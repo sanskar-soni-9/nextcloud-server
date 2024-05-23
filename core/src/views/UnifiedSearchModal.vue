@@ -1,3 +1,7 @@
+<!--
+ - SPDX-FileCopyrightText: 2023 Nextcloud GmbH and Nextcloud contributors
+ - SPDX-License-Identifier: AGPL-3.0-or-later
+-->
 <template>
 	<NcModal id="unified-search"
 		ref="unifiedSearchModal"
@@ -391,6 +395,7 @@ export default {
 					subname: contact.emailAddresses[0] ? contact.emailAddresses[0] : '',
 					icon: '',
 					user: contact.id,
+					isUser: contact.isUser,
 				}
 			})
 		},

@@ -1,6 +1,12 @@
 <?php
 
 /**
+ * SPDX-FileCopyrightText: 2016-2024 Nextcloud GmbH and Nextcloud contributors
+ * SPDX-FileCopyrightText: 2016 ownCloud, Inc.
+ * SPDX-License-Identifier: AGPL-3.0-only
+ */
+ 
+/**
  * This configuration file is only provided to document the different
  * configuration options and their usage.
  *
@@ -158,6 +164,13 @@ $CONFIG = [
 	['user' => 'nextcloud', 'password' => 'password1', 'host' => 'replica1', 'dbname' => ''],
 	['user' => 'nextcloud', 'password' => 'password2', 'host' => 'replica2', 'dbname' => ''],
 ],
+
+/**
+ * Add request id to the database query in a comment.
+ *
+ * This can be enabled to assist in mapping database logs to Nextcloud logs.
+ */
+'db.log_request_id' => false,
 
 /**
  * Indicates whether the Nextcloud instance was installed successfully; ``true``
@@ -363,7 +376,7 @@ $CONFIG = [
  * Tokens are still checked every 5 minutes for validity
  * max value: 300
  *
- * Defaults to ``300``
+ * Defaults to ``60``
  */
 'token_auth_activity_update' => 60,
 
@@ -1965,7 +1978,7 @@ $CONFIG = [
 /**
  * Blacklist characters from being used in filenames. This is useful if you
  * have a filesystem or OS which does not support certain characters like windows.
- * 
+ *
  * The '/' and '\' characters are always forbidden.
  *
  * Example for windows systems: ``array('?', '<', '>', ':', '*', '|', '"', chr(0), "\n", "\r")``
@@ -2229,6 +2242,11 @@ $CONFIG = [
 'upgrade.cli-upgrade-link' => '',
 
 /**
+ * Allows to modify the exception server logs documentation link in order to link to a different documentation
+ */
+'documentation_url.server_logs' => '',
+
+/**
  * Set this Nextcloud instance to debugging mode
  *
  * Only enable this for local development and not in production environments
@@ -2311,7 +2329,7 @@ $CONFIG = [
 /**
  * Timeout for the login form, after this time the login form is reset.
  * This prevents password leaks on public devices if the user forgots to clear the form.
- * 
+ *
  * Default is 5 minutes (300 seconds), a value of 0 means no timeout.
  */
 'login_form_timeout' => 300,
