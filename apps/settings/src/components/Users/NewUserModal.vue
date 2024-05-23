@@ -100,7 +100,7 @@
 				class="modal__item">
 				<label class="modal__label"
 					for="new-user-sub-admin">
-					{{ t('settings', 'Manages user(s) in the following group(s)') }}
+					{{ t('settings', 'Admin of the following groups') }}
 				</label>
 				<NcSelect v-model="newUser.subAdminsGroups"
 					class="modal__select"
