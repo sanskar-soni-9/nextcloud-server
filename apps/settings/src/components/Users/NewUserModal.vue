@@ -77,7 +77,7 @@
 			<div class="modal__item">
 				<label class="modal__label"
 					for="new-user-groups">
-					{{ !settings.isAdmin ? t('settings', 'Groups (required)') : t('settings', 'Belongs to the following group(s)') }}
+					{{ !settings.isAdmin ? t('settings', 'Groups (required)') : t('settings', 'Member of the following groups') }}
 				</label>
 				<NcSelect class="modal__select"
 					input-id="new-user-groups"
