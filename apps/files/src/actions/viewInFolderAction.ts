@@ -19,6 +19,11 @@ export const action = new FileAction({
 			return false
 		}
 
+		// Not enabled for public shares
+		if (view.id === 'public-share') {
+			return false
+		}
+
 		// Only works on single node
 		if (nodes.length !== 1) {
 			return false
