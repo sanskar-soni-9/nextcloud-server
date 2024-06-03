@@ -4,8 +4,8 @@
  -->
 <template>
 	<NcContent app-name="files">
-		<Navigation />
-		<FilesList />
+		<Navigation v-if="!isPublic" />
+		<FilesList :is-public="isPublic" />
 	</NcContent>
 </template>
 
@@ -16,6 +16,7 @@ import NcContent from '@nextcloud/vue/dist/Components/NcContent.js'
 
 import Navigation from './views/Navigation.vue'
 import FilesList from './views/FilesList.vue'
+import { loadState } from '@nextcloud/initial-state'
 
 export default defineComponent({
 	name: 'FilesApp',
@@ -24,6 +25,13 @@ export default defineComponent({
 		NcContent,
 		FilesList,
 		Navigation,
+	},
+
+	setup() {
+		const isPublic = loadState('files_sharing', 'isPublic', false)
+		return {
+			isPublic,
+		}
 	},
 })
 </script>
