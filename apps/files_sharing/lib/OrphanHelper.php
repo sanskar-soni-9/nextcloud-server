@@ -99,6 +99,7 @@ class OrphanHelper {
 			return null;
 		}
 		foreach ($mounts as $mount) {
+			// Only the mount of owner has the internal path value
 			if ($mount->getInternalPath()) {
 				return $mount->getUser()->getUID();
 			}
