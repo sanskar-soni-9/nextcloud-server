@@ -22,6 +22,9 @@
 			:icon="icon"
 			@click="(event) => action(event, { ...user })">
 			{{ text }}
+			<template v-if="isSvg(icon)" #icon>
+				<NcIconSvgWrapper :svg="icon" aria-hidden="true" />
+			</template>
 		</NcActionButton>
 	</NcActions>
 </template>
@@ -29,6 +32,7 @@
 <script lang="ts">
 import type { PropType } from 'vue'
 import { defineComponent } from 'vue'
+import isSvg from 'is-svg'
 
 import NcActionButton from '@nextcloud/vue/dist/Components/NcActionButton.js'
 import NcActions from '@nextcloud/vue/dist/Components/NcActions.js'
@@ -93,6 +97,8 @@ export default defineComponent({
 	},
 
 	methods: {
+		isSvg,
+
 		/**
 		 * Toggle edit mode by emitting the update event
 		 */
