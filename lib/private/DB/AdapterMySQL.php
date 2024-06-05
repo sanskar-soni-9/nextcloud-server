@@ -35,4 +35,20 @@ class AdapterMySQL extends Adapter {
 
 		return $this->collation;
 	}
+
+	public function insertIgnoreConflict(string $table, array $values): int {
+		$builder = $this->conn->getQueryBuilder();
+		$builder->insert($table);
+		$updates = [];
+		foreach ($values as $key => $value) {
+			$builder->setValue($key, $builder->createNamedParameter($value));
+		}
+
+		$field = key($values);
+		return $this->conn->executeStatement(
+			$builder->getSQL() . ' ON DUPLICATE KEY UPDATE `'.$field.'` = `'.$field.'`',
+			$builder->getParameters(),
+			$builder->getParameterTypes()
+		);
+	}
 }
