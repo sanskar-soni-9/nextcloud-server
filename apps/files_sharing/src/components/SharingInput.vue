@@ -193,13 +193,16 @@ export default {
 			}
 
 			let shareType = []
-
 			const remoteTypes = [ShareType.Remote, ShareType.RemoteGroup]
+			const showFederatedAsInternal = this.config.showFederatedSharesAsInternal
+				|| this.config.showFederatedSharesToTrustedServersAsInternal
 
-			if (this.isExternal && !this.config.showFederatedSharesAsInternal) {
-				shareType.push(...remoteTypes)
+			if (this.isExternal) {
+				if (!showFederatedAsInternal) {
+					shareType.push(...remoteTypes)
+				}
 			} else {
-				shareType = shareType.concat([
+				shareType = [
 					ShareType.User,
 					ShareType.Group,
 					ShareType.Team,
@@ -207,15 +210,17 @@ export default {
 					ShareType.Guest,
 					ShareType.Deck,
 					ShareType.ScienceMesh,
-				])
-
-				if (this.config.showFederatedSharesAsInternal) {
+				]
+				if (showFederatedAsInternal) {
 					shareType.push(...remoteTypes)
 				}
 			}
 
 			if (getCapabilities().files_sharing.public.enabled === true && this.isExternal) {
 				shareType.push(ShareType.Email)
+				if (this.config.showFederatedSharesToTrustedServersAsInternal) {
+					shareType.push(...remoteTypes)
+				}
 			}
 
 			let request = null
@@ -366,6 +371,11 @@ export default {
 
 					// filter out existing mail shares
 					if (share.value.shareType === ShareType.Email) {
+						// When sharing internally, we don't want to suggest email addresses
+						// that the user previously created shares to
+						if (!this.isExternal) {
+							return arr
+						}
 						const emails = this.linkShares.map(elem => elem.shareWith)
 						if (emails.indexOf(share.value.shareWith.trim()) !== -1) {
 							return arr
