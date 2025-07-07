@@ -1282,6 +1282,9 @@ class Server extends ServerContainer implements IServerContainer {
 		$this->registerAlias(ISignatureManager::class, SignatureManager::class);
 
 		$this->connectDispatcher();
+
+		/** @since 32.0.0 */
+		$this->registerAlias(\OCP\ContextChat\IContentManager::class, \OC\ContextChat\ContentManager::class);
 	}
 
 	public function boot() {
