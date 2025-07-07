@@ -19,7 +19,7 @@ export const action = new FileAction({
 			return false
 		}
 		// Disable for single file shares
-		if (view.id === 'public-file-share') {
+		if (view.id === 'public-file-share' || view.id === 'trashbin') {
 			return false
 		}
 		// Only enable if all nodes have the delete permission
